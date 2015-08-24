@@ -1,5 +1,18 @@
 package net.dongliu.requests;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.Charset;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+
+import com.sun.deploy.security.CertificateHostnameVerifier;
 import net.dongliu.requests.encode.URIBuilder;
 import net.dongliu.requests.struct.Parameter;
 import net.dongliu.requests.struct.Parameters;
@@ -9,17 +22,10 @@ import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLContexts;
-
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.charset.Charset;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
+import org.apache.http.ssl.SSLContexts;
+import org.apache.http.nio.conn.NoopIOSessionStrategy;
+import org.apache.http.nio.conn.SchemeIOSessionStrategy;
+import org.apache.http.nio.conn.ssl.SSLIOSessionStrategy;
 
 /**
  * Util methods
@@ -37,7 +43,7 @@ class Utils {
         // trust all http certificate
         if (!verify) {
             try {
-                sslContext = SSLContexts.custom().useTLS().build();
+                sslContext = SSLContexts.custom().useProtocol("TLS").build();
                 sslContext.init(new KeyManager[0], new TrustManager[]{new AllTrustManager()},
                         new SecureRandom());
             } catch (NoSuchAlgorithmException | KeyManagementException e) {
@@ -54,6 +60,34 @@ class Utils {
                 .register("http", psf)
                 .register("https", sslsf)
                 .build();
+    }
+    
+    static Registry<SchemeIOSessionStrategy> getSchemeIOSessionStrategy(boolean verify){
+        SSLContext sslContext;
+    
+        // trust all http certificate
+        if (!verify) {
+            try {
+                sslContext = SSLContexts.custom().useProtocol("TLS").build();
+                sslContext.init(new KeyManager[0], new TrustManager[]{new AllTrustManager()},
+                                new SecureRandom());
+            } catch (NoSuchAlgorithmException | KeyManagementException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            sslContext = SSLContexts.createSystemDefault();
+        }
+    
+        SSLIOSessionStrategy sis = new SSLIOSessionStrategy(sslContext, verify ? new CertificateHostnameVerifier() : new HostnameVerifier() {
+            @Override
+            public boolean verify(String s, SSLSession sslSession) {
+                return true;
+            }
+        });
+        return RegistryBuilder.<SchemeIOSessionStrategy>create()
+                              .register("http", NoopIOSessionStrategy.INSTANCE)
+                              .register("https", sis)
+                              .build();
     }
 
     // build full url with parameters
