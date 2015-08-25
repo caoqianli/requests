@@ -137,8 +137,8 @@ public class PooledClient implements Closeable {
 	CloseableHttpAsyncClient getHttpAsyncClient() throws IOReactorException {
 		if (asyncClient == null) {
 			buildHttpAsyncClient();
+			asyncClient.start();
 		}
-		asyncClient.start();
 		return asyncClient;
 	}
 	
