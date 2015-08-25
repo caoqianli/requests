@@ -160,9 +160,7 @@ public class PooledClient implements Closeable {
 			}
 		}
 		
-		HttpClientBuilder clientBuilder = HttpClients.custom().setUserAgent(pooledClientBuilder.userAgent);
-		
-		clientBuilder.setConnectionManager(manager);
+		HttpClientBuilder clientBuilder = HttpClients.custom().setUserAgent(pooledClientBuilder.userAgent).setConnectionManager(manager);
 		
 		// disable gzip
 		if (!pooledClientBuilder.gzip) {
@@ -195,7 +193,9 @@ public class PooledClient implements Closeable {
 				asyncConnectionManager.setMaxPerRoute(new HttpRoute(new HttpHost(host.getDomain(), host.getPort())), pair.getValue());
 			}
 		}
-		HttpAsyncClientBuilder asyncClientBuilder = HttpAsyncClientBuilder.create().setUserAgent(pooledClientBuilder.userAgent);
+		HttpAsyncClientBuilder asyncClientBuilder = HttpAsyncClientBuilder.create()
+		                                                                  .setUserAgent(pooledClientBuilder.userAgent)
+		                                                                  .setConnectionManager(asyncConnectionManager);
 		
 		if (pooledClientBuilder.allowPostRedirects) {
 			asyncClientBuilder.setRedirectStrategy(new AllRedirectStrategy());
