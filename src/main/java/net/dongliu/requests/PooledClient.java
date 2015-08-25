@@ -1,7 +1,6 @@
 package net.dongliu.requests;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -37,19 +36,14 @@ import org.apache.http.nio.reactor.IOReactorException;
 public class PooledClient implements Closeable {
 	
 	// the wrapped http client
-	private final CloseableHttpClient client;
-	private final CloseableHttpAsyncClient asyncClient;
-	
+	private CloseableHttpClient client;
+	private CloseableHttpAsyncClient asyncClient;
 	private AsyncIdleConnectionMonitorThread asyncIdleConnectionMonitorThread;
 	
-	public PooledClient(CloseableHttpClient client,
-	                    CloseableHttpAsyncClient asyncClient,
-	                    AsyncIdleConnectionMonitorThread asyncIdleConnectionMonitorThread,
-	                    Proxy proxy) {
-		this.client = client;
-		this.asyncClient = asyncClient;
-		this.asyncIdleConnectionMonitorThread = asyncIdleConnectionMonitorThread;
-		this.proxy = proxy;
+	private final PooledClientBuilder pooledClientBuilder;
+	
+	public PooledClient(PooledClientBuilder pooledClientBuilder) {
+		this.pooledClientBuilder = pooledClientBuilder;
 	}
 	
 	/**
@@ -59,17 +53,15 @@ public class PooledClient implements Closeable {
 		return new PooledClientBuilder();
 	}
 	
-	private final Proxy proxy;
-	
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		HttpClientUtils.closeQuietly(client);
 		HttpAsyncClientUtils.closeQuietly(asyncClient);
 		asyncIdleConnectionMonitorThread.interrupt();
 	}
 	
 	Proxy getProxy() {
-		return proxy;
+		return pooledClientBuilder.proxy;
 	}
 	
 	/**
@@ -122,6 +114,13 @@ public class PooledClient implements Closeable {
 	}
 	
 	/**
+	 * trace method
+	 */
+	public RequestBuilder trace(String url) throws RequestException {
+		return Requests.trace(url).connectionPool(this);
+	}
+	
+	/**
 	 * create a session. session can do request as Requests do, and keep cookies to maintain a http session
 	 */
 	public Session session() {
@@ -129,19 +128,83 @@ public class PooledClient implements Closeable {
 	}
 	
 	CloseableHttpClient getHttpClient() {
+		if (client == null) {
+			buildHttpClient();
+		}
 		return client;
 	}
 	
-	CloseableHttpAsyncClient getHttpAsyncClient() {
+	CloseableHttpAsyncClient getHttpAsyncClient() throws IOReactorException {
+		if (asyncClient == null) {
+			buildHttpAsyncClient();
+		}
 		asyncClient.start();
 		return asyncClient;
 	}
 	
-	/**
-	 * trace method
-	 */
-	public RequestBuilder trace(String url) throws RequestException {
-		return Requests.trace(url).connectionPool(this);
+	void buildHttpClient() {
+		Registry<ConnectionSocketFactory> r = Utils.getConnectionSocketFactoryRegistry(pooledClientBuilder.proxy, pooledClientBuilder.verify);
+		PoolingHttpClientConnectionManager manager = new PoolingHttpClientConnectionManager(r,
+		                                                                                    null,
+		                                                                                    null,
+		                                                                                    null,
+		                                                                                    pooledClientBuilder.timeToLive,
+		                                                                                    TimeUnit.MILLISECONDS);
+		
+		manager.setMaxTotal(pooledClientBuilder.maxTotal);
+		manager.setDefaultMaxPerRoute(pooledClientBuilder.maxPerRoute);
+		if (pooledClientBuilder.perRouteCount != null) {
+			for (Pair<Host, Integer> pair : pooledClientBuilder.perRouteCount) {
+				Host host = pair.getName();
+				manager.setMaxPerRoute(new HttpRoute(new HttpHost(host.getDomain(), host.getPort())), pair.getValue());
+			}
+		}
+		
+		HttpClientBuilder clientBuilder = HttpClients.custom().setUserAgent(pooledClientBuilder.userAgent);
+		
+		clientBuilder.setConnectionManager(manager);
+		
+		// disable gzip
+		if (!pooledClientBuilder.gzip) {
+			clientBuilder.disableContentCompression();
+		}
+		
+		if (!pooledClientBuilder.allowRedirects) {
+			clientBuilder.disableRedirectHandling();
+		}
+		
+		if (pooledClientBuilder.allowPostRedirects) {
+			clientBuilder.setRedirectStrategy(new AllRedirectStrategy());
+		}
+		client = clientBuilder.build();
+	}
+	
+	void buildHttpAsyncClient() throws IOReactorException {
+		PoolingNHttpClientConnectionManager asyncConnectionManager = new PoolingNHttpClientConnectionManager(new DefaultConnectingIOReactor(),
+		                                                                                                     null,
+		                                                                                                     Utils.getSchemeIOSessionStrategy(pooledClientBuilder.verify),
+		                                                                                                     null,
+		                                                                                                     null,
+		                                                                                                     pooledClientBuilder.timeToLive,
+		                                                                                                     TimeUnit.MILLISECONDS);
+		asyncConnectionManager.setMaxTotal(pooledClientBuilder.maxTotal);
+		asyncConnectionManager.setDefaultMaxPerRoute(pooledClientBuilder.maxPerRoute);
+		if (pooledClientBuilder.perRouteCount != null) {
+			for (Pair<Host, Integer> pair : pooledClientBuilder.perRouteCount) {
+				Host host = pair.getName();
+				asyncConnectionManager.setMaxPerRoute(new HttpRoute(new HttpHost(host.getDomain(), host.getPort())), pair.getValue());
+			}
+		}
+		HttpAsyncClientBuilder asyncClientBuilder = HttpAsyncClientBuilder.create().setUserAgent(pooledClientBuilder.userAgent);
+		
+		if (pooledClientBuilder.allowPostRedirects) {
+			asyncClientBuilder.setRedirectStrategy(new AllRedirectStrategy());
+		}
+		
+		asyncIdleConnectionMonitorThread = new AsyncIdleConnectionMonitorThread(asyncConnectionManager);
+		asyncIdleConnectionMonitorThread.start();
+		
+		asyncClient = asyncClientBuilder.build();
 	}
 	
 	public static class PooledClientBuilder {
@@ -165,65 +228,13 @@ public class PooledClient implements Closeable {
 		private boolean allowPostRedirects = false;
 		private String userAgent = Utils.defaultUserAgent;
 		
+		private AsyncIdleConnectionMonitorThread asyncIdleConnectionMonitorThread;
+		
 		PooledClientBuilder() {
 		}
 		
-		public PooledClient build() throws IOReactorException {
-			Registry<ConnectionSocketFactory> r = Utils.getConnectionSocketFactoryRegistry(proxy,
-			                                                                               verify);
-			PoolingHttpClientConnectionManager manager = new PoolingHttpClientConnectionManager(r,
-			                                                                                    null, null, null, timeToLive, TimeUnit.MILLISECONDS);
-			
-			manager.setMaxTotal(maxTotal);
-			manager.setDefaultMaxPerRoute(maxPerRoute);
-			if (perRouteCount != null) {
-				for (Pair<Host, Integer> pair : perRouteCount) {
-					Host host = pair.getName();
-					manager.setMaxPerRoute(
-							                      new HttpRoute(new HttpHost(host.getDomain(), host.getPort())),
-							                      pair.getValue());
-				}
-			}
-			
-			HttpClientBuilder clientBuilder = HttpClients.custom().setUserAgent(userAgent);
-			
-			clientBuilder.setConnectionManager(manager);
-			
-			// disable gzip
-			if (!gzip) {
-				clientBuilder.disableContentCompression();
-			}
-			
-			if (!allowRedirects) {
-				clientBuilder.disableRedirectHandling();
-			}
-			
-			if (allowPostRedirects) {
-				clientBuilder.setRedirectStrategy(new AllRedirectStrategy());
-			}
-			
-			PoolingNHttpClientConnectionManager asyncConnectionManager = new PoolingNHttpClientConnectionManager(new DefaultConnectingIOReactor(),
-			                                                                                                     null,
-			                                                                                                     Utils.getSchemeIOSessionStrategy(verify),
-			                                                                                                     null,
-			                                                                                                     null,
-			                                                                                                     timeToLive,
-			                                                                                                     TimeUnit.MILLISECONDS);
-			asyncConnectionManager.setMaxTotal(maxTotal);
-			asyncConnectionManager.setDefaultMaxPerRoute(maxPerRoute);
-			if (perRouteCount != null) {
-				for (Pair<Host, Integer> pair : perRouteCount) {
-					Host host = pair.getName();
-					asyncConnectionManager.setMaxPerRoute(new HttpRoute(new HttpHost(host.getDomain(), host.getPort())), pair.getValue());
-				}
-			}
-			AsyncIdleConnectionMonitorThread asyncIdleConnectionMonitorThread = new AsyncIdleConnectionMonitorThread(asyncConnectionManager);
-			HttpAsyncClientBuilder asyncClientBuilder = HttpAsyncClientBuilder.create().setUserAgent(userAgent);
-			
-			if (allowPostRedirects) {
-				asyncClientBuilder.setRedirectStrategy(new AllRedirectStrategy());
-			}
-			return new PooledClient(clientBuilder.build(), asyncClientBuilder.build(), asyncIdleConnectionMonitorThread, proxy);
+		public PooledClient build() {
+			return new PooledClient(this);
 		}
 		
 		/**
