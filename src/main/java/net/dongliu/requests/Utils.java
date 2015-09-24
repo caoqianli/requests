@@ -1,18 +1,5 @@
 package net.dongliu.requests;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.charset.Charset;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.TrustManager;
-
-import com.sun.deploy.security.CertificateHostnameVerifier;
 import net.dongliu.requests.encode.URIBuilder;
 import net.dongliu.requests.struct.Parameter;
 import net.dongliu.requests.struct.Parameters;
@@ -21,11 +8,20 @@ import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.ssl.SSLContexts;
 import org.apache.http.nio.conn.NoopIOSessionStrategy;
 import org.apache.http.nio.conn.SchemeIOSessionStrategy;
 import org.apache.http.nio.conn.ssl.SSLIOSessionStrategy;
+import org.apache.http.ssl.SSLContexts;
+
+import javax.net.ssl.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.Charset;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 
 /**
  * Util methods
@@ -78,7 +74,7 @@ class Utils {
             sslContext = SSLContexts.createSystemDefault();
         }
     
-        SSLIOSessionStrategy sis = new SSLIOSessionStrategy(sslContext, verify ? new CertificateHostnameVerifier() : new HostnameVerifier() {
+        SSLIOSessionStrategy sis = new SSLIOSessionStrategy(sslContext, verify ? new NoopHostnameVerifier() : new HostnameVerifier() {
             @Override
             public boolean verify(String s, SSLSession sslSession) {
                 return true;
