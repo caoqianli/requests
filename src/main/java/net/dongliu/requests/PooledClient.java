@@ -68,56 +68,56 @@ public class PooledClient implements Closeable {
      * get method
      */
     public RequestBuilder get(String url) throws RequestException {
-        return Requests.get(url).connectionPool(this);
+        return Requests.get(url).executedBy(this);
     }
 
     /**
      * head method
      */
     public RequestBuilder head(String url) throws RequestException {
-        return Requests.head(url).connectionPool(this);
+        return Requests.head(url).executedBy(this);
     }
 
     /**
      * get url, and return content
      */
     public RequestBuilder post(String url) throws RequestException {
-        return Requests.post(url).connectionPool(this);
+        return Requests.post(url).executedBy(this);
     }
 
     /**
      * put method
      */
     public RequestBuilder put(String url) throws RequestException {
-        return Requests.put(url).connectionPool(this);
+        return Requests.put(url).executedBy(this);
     }
 
     /**
      * delete method
      */
     public RequestBuilder delete(String url) throws RequestException {
-        return Requests.delete(url).connectionPool(this);
+        return Requests.delete(url).executedBy(this);
     }
 
     /**
      * options method
      */
     public RequestBuilder options(String url) throws RequestException {
-        return Requests.options(url).connectionPool(this);
+        return Requests.options(url).executedBy(this);
     }
 
     /**
      * patch method
      */
     public RequestBuilder patch(String url) throws RequestException {
-        return Requests.patch(url).connectionPool(this);
+        return Requests.patch(url).executedBy(this);
     }
 
     /**
      * trace method
      */
     public RequestBuilder trace(String url) throws RequestException {
-        return Requests.trace(url).connectionPool(this);
+        return Requests.trace(url).executedBy(this);
     }
 
     /**
@@ -228,39 +228,11 @@ public class PooledClient implements Closeable {
         private boolean allowPostRedirects = false;
         private String userAgent = Utils.defaultUserAgent;
 
-        private AsyncIdleConnectionMonitorThread asyncIdleConnectionMonitorThread;
-
         PooledClientBuilder() {
         }
 
         public PooledClient build() {
-            Registry<ConnectionSocketFactory> r = Utils.getConnectionSocketFactoryRegistry(proxy, verify);
-            PoolingHttpClientConnectionManager manager = new PoolingHttpClientConnectionManager(r, null, null, null, timeToLive, TimeUnit.MILLISECONDS);
-
-            manager.setMaxTotal(maxTotal);
-            manager.setDefaultMaxPerRoute(maxPerRoute);
-            if (perRouteCount != null) {
-                for (Pair<Host, Integer> pair : perRouteCount) {
-                    Host host = pair.getName();
-                    manager.setMaxPerRoute(new HttpRoute(new HttpHost(host.getDomain(), host.getPort())), pair.getValue());
-                }
-            }
-
-            HttpClientBuilder clientBuilder = HttpClients.custom().setUserAgent(userAgent).setConnectionManager(manager);
-
-            // disable gzip
-            if (!gzip) {
-                clientBuilder.disableContentCompression();
-            }
-
-            if (!allowRedirects) {
-                clientBuilder.disableRedirectHandling();
-            }
-
-            if (allowPostRedirects) {
-                clientBuilder.setRedirectStrategy(new AllRedirectStrategy());
-            }
-            return new PooledClient(clientBuilder.build(), proxy);
+            return new PooledClient(this);
         }
 
         /**

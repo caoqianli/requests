@@ -1,5 +1,9 @@
 package net.dongliu.requests;
 
+import net.dongliu.requests.async.Callback;
+import net.dongliu.requests.exception.RequestException;
+import net.dongliu.requests.struct.*;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,19 +17,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Future;
 
-import net.dongliu.requests.async.Callback;
-import net.dongliu.requests.exception.RequestException;
-import net.dongliu.requests.struct.AuthInfo;
-import net.dongliu.requests.struct.Cookie;
-import net.dongliu.requests.struct.Cookies;
-import net.dongliu.requests.struct.Header;
-import net.dongliu.requests.struct.Headers;
-import net.dongliu.requests.struct.Method;
-import net.dongliu.requests.struct.MultiPart;
-import net.dongliu.requests.struct.Parameter;
-import net.dongliu.requests.struct.Parameters;
-import net.dongliu.requests.struct.Proxy;
-
 /**
  * http requests builder
  */
@@ -36,10 +27,10 @@ public class RequestBuilder {
 	private String userAgent = Utils.defaultUserAgent;
 	private Headers headers;
 	private Cookies cookies;
-	
+
 	private Charset charset = StandardCharsets.UTF_8;
 	private Charset responseCharset = StandardCharsets.UTF_8;
-	
+
 	private byte[] body;
 	private String strBody;
 	// parameter type body(form-encoded)
@@ -48,10 +39,10 @@ public class RequestBuilder {
 	private List<MultiPart> multiParts;
 	// http request body from inputStream
 	private InputStream in;
-	
+
 	private int connectTimeout = 10_000;
 	private int socketTimeout = 10_000;
-	
+
 	private boolean gzip = true;
 	// if check ssl certificate
 	private boolean verify = true;
@@ -61,13 +52,13 @@ public class RequestBuilder {
 	private AuthInfo authInfo;
 	private String[] cert;
 	private Proxy proxy;
-	
+
 	private Session session;
 	private PooledClient pooledClient;
-	
+
 	RequestBuilder() {
 	}
-	
+
 	/**
 	 * get http response for return result with Type T.
 	 */
@@ -78,7 +69,7 @@ public class RequestBuilder {
 			throw new RequestException(e);
 		}
 	}
-	
+
 	<T> Future<Response<T>> client(ResponseProcessor<T> processor, Callback<T> callback) throws RequestException {
 		try {
 			return new RequestExecutor<>(build(), processor, session, pooledClient).execute(callback);
@@ -86,18 +77,18 @@ public class RequestBuilder {
 			throw new RequestException(e);
 		}
 	}
-	
+
 	/**
 	 * set custom handler to handle http response
 	 */
 	public <T> Response<T> handler(ResponseHandler<T> handler) throws RequestException {
 		return client(new ResponseHandlerAdapter<T>(handler));
 	}
-	
+
 	public <T> Future<Response<T>> handler(ResponseHandler<T> handler, Callback<T> callback) throws RequestException {
 		return client(new ResponseHandlerAdapter<T>(handler), callback);
 	}
-	
+
 	/**
 	 * Get http response for return text result.
 	 * Decode response body to text with charset get from response header,
@@ -106,30 +97,30 @@ public class RequestBuilder {
 	public Response<String> text() throws RequestException {
 		return client(new StringResponseProcessor(responseCharset));
 	}
-	
+
 	public Future<Response<String>> textAsync() throws RequestException {
 		return textAsync(null);
 	}
-	
+
 	public Future<Response<String>> textAsync(Callback<String> callback) throws RequestException {
 		return client(new StringResponseProcessor(responseCharset), callback);
 	}
-	
+
 	/**
 	 * get http response for return byte array result.
 	 */
 	public Response<byte[]> bytes() throws RequestException {
 		return client(ResponseProcessor.bytes);
 	}
-	
+
 	public Future<Response<byte[]>> bytesAsync() throws RequestException {
 		return bytesAsync(null);
 	}
-	
+
 	public Future<Response<byte[]>> bytesAsync(Callback<byte[]> callback) throws RequestException {
 		return client(ResponseProcessor.bytes, callback);
 	}
-	
+
 	/**
 	 * get http response for write response body to file.
 	 * only save to file when return status is 200, otherwise return response with null body.
@@ -137,15 +128,15 @@ public class RequestBuilder {
 	public Response<File> file(File file) throws RequestException {
 		return client(new FileResponseProcessor(file));
 	}
-	
+
 	public Future<Response<File>> fileAsync(File file) throws RequestException {
 		return fileAsync(file, null);
 	}
-	
+
 	public Future<Response<File>> fileAsync(File file, Callback<File> callback) throws RequestException {
 		return client(new FileResponseProcessor(file), callback);
 	}
-	
+
 	/**
 	 * get http response for write response body to file.
 	 * only save to file when return status is 200, otherwise return response with null body.
@@ -153,15 +144,15 @@ public class RequestBuilder {
 	public Response<File> file(String filePath) throws RequestException {
 		return client(new FileResponseProcessor(filePath));
 	}
-	
+
 	public Future<Response<File>> fileAsync(String filePath) throws RequestException {
 		return fileAsync(filePath, null);
 	}
-	
+
 	public Future<Response<File>> fileAsync(String filePath, Callback<File> callback) throws RequestException {
 		return client(new FileResponseProcessor(filePath), callback);
 	}
-	
+
 	RequestBuilder url(String url) throws RequestException {
 		try {
 			this.url = new URI(url);
@@ -170,13 +161,13 @@ public class RequestBuilder {
 		}
 		return this;
 	}
-	
+
 	Request build() {
 		return new Request(method, url, parameters, userAgent, headers, in, multiParts, body,
-		                   strBody, formParameters, charset, authInfo, gzip, verify, cookies, allowRedirects, allowPostRedirects,
-		                   connectTimeout, socketTimeout, proxy);
+				strBody, formParameters, charset, authInfo, gzip, verify, cookies, allowRedirects, allowPostRedirects,
+				connectTimeout, socketTimeout, proxy);
 	}
-	
+
 	/**
 	 * set userAgent
 	 */
@@ -185,9 +176,9 @@ public class RequestBuilder {
 		this.userAgent = userAgent;
 		return this;
 	}
-	
+
 	/**
-	 * Set params of url query string.
+	 * Set params of url query string. Will overwrite old cookie values
 	 * This is for set parameters in url query str, If want to set post form params use form((Map&lt;String, ?&gt; params) method
 	 */
 	public RequestBuilder params(Map<String, ?> params) {
@@ -197,9 +188,9 @@ public class RequestBuilder {
 		}
 		return this;
 	}
-	
+
 	/**
-	 * Set params of url query string.
+	 * Set params of url query string. Will overwrite old param values
 	 * This is for set parameters in url query str, If want to set post form params use form(Parameter... params) method
 	 */
 	public RequestBuilder params(Parameter... params) {
@@ -209,9 +200,33 @@ public class RequestBuilder {
 		}
 		return this;
 	}
-	
+
 	/**
-	 * Add one parameter to url query string.
+	 * Add params of url query string.
+	 * This is for add parameters in url query str, If want to set post form params use form((Map&lt;String, ?&gt; params) method
+	 */
+	public RequestBuilder addParams(Map<String, ?> params) {
+		ensureParameters();
+		for (Map.Entry<String, ?> entry : params.entrySet()) {
+			this.parameters.add(new Parameter(entry.getKey(), entry.getValue()));
+		}
+		return this;
+	}
+
+	/**
+	 * Add params of url query string.
+	 * This is for add parameters in url query str, If want to set post form params use form(Parameter... params) method
+	 */
+	public RequestBuilder addParams(Parameter... params) {
+		ensureParameters();
+		for (Parameter param : params) {
+			this.parameters.add(new Parameter(param.getName(), param.getValue()));
+		}
+		return this;
+	}
+
+	/**
+	 * Add one parameter to url query string. Will overwrite old param values
 	 * This is for set parameters in url query str, If want to set post form params use form(String key, Object value) method
 	 */
 	public RequestBuilder addParam(String key, Object value) {
@@ -219,34 +234,13 @@ public class RequestBuilder {
 		this.parameters.add(new Parameter(key, value));
 		return this;
 	}
-	
-	/**
-	 * Add one parameter to url query string.
-	 * This is for set parameters in url query str, If want to set post form params use form(String key, Object value) method
-	 *
-	 * @deprecated use {@link #addParam(String, Object)} method instead
-	 */
-	@Deprecated
-	public RequestBuilder param(String key, Object value) {
-		return addParam(key, value);
-	}
-	
+
 	private void ensureParameters() {
 		if (this.parameters == null) {
 			this.parameters = new Parameters();
 		}
 	}
-	
-	/**
-	 * Add http form body data, for http post method with form-encoded body.
-	 *
-	 * @deprecated use {@link #addForm(String, Object)} method
-	 */
-	@Deprecated
-	public RequestBuilder form(String key, Object value) {
-		return this.addForm(key, value);
-	}
-	
+
 	/**
 	 * Add http form body data, for http post method with form-encoded body.
 	 */
@@ -255,9 +249,9 @@ public class RequestBuilder {
 		formParameters.add(new Parameter(key, value));
 		return this;
 	}
-	
+
 	/**
-	 * Set http form body data, for http post method with form-encoded body.
+	 * Set http form body data, for http post method with form-encoded body.  Will overwrite old param values
 	 */
 	public RequestBuilder forms(Map<String, ?> params) {
 		this.formParameters = new Parameters();
@@ -266,7 +260,7 @@ public class RequestBuilder {
 		}
 		return this;
 	}
-	
+
 	/**
 	 * Set http form body data, for http post method with form-encoded body.
 	 */
@@ -277,53 +271,35 @@ public class RequestBuilder {
 		}
 		return this;
 	}
-	
+
 	/**
-	 * Set http form body data, for http post method with form-encoded body.
-	 *
-	 * @deprecated use {@link #forms(Map)} method instead
+	 * Add http form params, for http post method with form-encoded body.
 	 */
-	@Deprecated
-	public RequestBuilder form(Map<String, ?> params) {
-		return forms(params);
+	public RequestBuilder addForms(Map<String, ?> params) {
+		ensureFormParameters();
+		for (Map.Entry<String, ?> e : params.entrySet()) {
+			this.formParameters.add(new Parameter(e.getKey(), e.getValue()));
+		}
+		return this;
 	}
-	
+
 	/**
-	 * Set http form body data, for http post method with form-encoded body.
-	 *
-	 * @deprecated use {@link #forms(Parameter...)} method instead
+	 * Add http form params, for http post method with form-encoded body.
 	 */
-	@Deprecated
-	public RequestBuilder form(Parameter... params) {
-		return forms(params);
+	public RequestBuilder addForms(Parameter... params) {
+		ensureFormParameters();
+		for (Parameter param : params) {
+			formParameters.add(param);
+		}
+		return this;
 	}
-	
-	/**
-	 * Set http form body data, for http post method with form-encoded body.
-	 *
-	 * @deprecated use {@link #forms(Map)} method instead
-	 */
-	@Deprecated
-	public RequestBuilder data(Map<String, ?> params) {
-		return forms(params);
-	}
-	
-	/**
-	 * Set http form body data, for http post method with form-encoded body.
-	 *
-	 * @deprecated use {@link #forms(Parameter...)} method instead
-	 */
-	@Deprecated
-	public RequestBuilder data(Parameter... params) {
-		return forms(params);
-	}
-	
+
 	private void ensureFormParameters() {
 		if (this.formParameters == null) {
 			this.formParameters = new Parameters();
 		}
 	}
-	
+
 	/**
 	 * Set http body data for Post/Put request
 	 *
@@ -333,7 +309,7 @@ public class RequestBuilder {
 		this.body = data;
 		return this;
 	}
-	
+
 	/**
 	 * Set http data from inputStream for Post/Put request
 	 */
@@ -341,7 +317,7 @@ public class RequestBuilder {
 		this.in = in;
 		return this;
 	}
-	
+
 	/**
 	 * Set http data with text.
 	 * The text string will be encoded, default using utf-8, set charset with charset(Charset charset) method
@@ -350,7 +326,7 @@ public class RequestBuilder {
 		this.strBody = body;
 		return this;
 	}
-	
+
 	/**
 	 * Set charset used to encode request, default utf-8.
 	 */
@@ -358,14 +334,14 @@ public class RequestBuilder {
 		this.charset = charset;
 		return this;
 	}
-	
+
 	/**
 	 * Set charset used to encode request, default utf-8.
 	 */
 	public RequestBuilder charset(String charset) {
 		return charset(Charset.forName(charset));
 	}
-	
+
 	/**
 	 * Set charset for decoding response.
 	 * Note that usually you do not need to set this because we can get charset from response header.
@@ -374,7 +350,7 @@ public class RequestBuilder {
 		this.responseCharset = charset;
 		return this;
 	}
-	
+
 	/**
 	 * Set charset for decoding response.
 	 * Note that usually you do not need to set this because we can get charset from response header.
@@ -382,14 +358,14 @@ public class RequestBuilder {
 	public RequestBuilder responseCharset(String charset) {
 		return responseCharset(Charset.forName(charset));
 	}
-	
+
 	RequestBuilder method(Method method) {
 		this.method = method;
 		return this;
 	}
-	
+
 	/**
-	 * Set headers
+	 * Set headers. Will overwrite old header values
 	 */
 	public RequestBuilder headers(Map<String, ?> params) {
 		this.headers = new Headers();
@@ -398,9 +374,9 @@ public class RequestBuilder {
 		}
 		return this;
 	}
-	
+
 	/**
-	 * Set headers
+	 * Set headers. Will overwrite old header values
 	 */
 	public RequestBuilder headers(Header... headers) {
 		this.headers = new Headers();
@@ -409,17 +385,29 @@ public class RequestBuilder {
 		}
 		return this;
 	}
-	
+
 	/**
-	 * Add one header
-	 *
-	 * @deprecated use {@link #addHeader(String, Object)} method
+	 * Add headers.
 	 */
-	@Deprecated
-	public RequestBuilder header(String key, Object value) {
-		return addHeader(key, value);
+	public RequestBuilder addHeaders(Map<String, ?> params) {
+		ensureHeaders();
+		for (Map.Entry<String, ?> entry : params.entrySet()) {
+			this.headers.add(new Header(entry.getKey(), entry.getValue()));
+		}
+		return this;
 	}
-	
+
+	/**
+	 * Add headers.
+	 */
+	public RequestBuilder addHeaders(Header... headers) {
+		ensureHeaders();
+		for (Header header : headers) {
+			this.headers.add(header);
+		}
+		return this;
+	}
+
 	/**
 	 * Add one header
 	 */
@@ -428,13 +416,13 @@ public class RequestBuilder {
 		this.headers.add(new Header(key, value));
 		return this;
 	}
-	
+
 	private void ensureHeaders() {
 		if (this.headers == null) {
 			this.headers = new Headers();
 		}
 	}
-	
+
 	/**
 	 * set socket connect and read timeout in milliseconds. default is 10_000.
 	 * A timeout value of zero is interpreted as an infinite timeout.
@@ -444,7 +432,7 @@ public class RequestBuilder {
 		this.socketTimeout = this.connectTimeout = timeout;
 		return this;
 	}
-	
+
 	/**
 	 * set socket connect and read timeout in milliseconds. default is 10_000.
 	 * A timeout value of zero is interpreted as an infinite timeout.
@@ -455,7 +443,7 @@ public class RequestBuilder {
 		this.socketTimeout = socketTimeout;
 		return this;
 	}
-	
+
 	/**
 	 * set proxy
 	 */
@@ -463,7 +451,7 @@ public class RequestBuilder {
 		this.proxy = proxy;
 		return this;
 	}
-	
+
 	/**
 	 * if send gzip requests. default true
 	 */
@@ -471,7 +459,7 @@ public class RequestBuilder {
 		this.gzip = gzip;
 		return this;
 	}
-	
+
 	/**
 	 * set false to disable ssl check for https requests
 	 */
@@ -479,7 +467,7 @@ public class RequestBuilder {
 		this.verify = verify;
 		return this;
 	}
-	
+
 	/**
 	 * set http basic auth info
 	 */
@@ -487,9 +475,9 @@ public class RequestBuilder {
 		authInfo = new AuthInfo(userName, password);
 		return this;
 	}
-	
+
 	/**
-	 * Set cookies
+	 * Set cookies. Will overwrite old cookie values
 	 */
 	public RequestBuilder cookies(Map<String, String> cookies) {
 		this.cookies = new Cookies();
@@ -498,9 +486,9 @@ public class RequestBuilder {
 		}
 		return this;
 	}
-	
+
 	/**
-	 * Set cookies
+	 * Set cookies. Will overwrite old cookie values
 	 */
 	public RequestBuilder cookies(Cookie... cookies) {
 		this.cookies = new Cookies();
@@ -509,17 +497,30 @@ public class RequestBuilder {
 		}
 		return this;
 	}
-	
+
+
 	/**
-	 * Add one cookie
-	 *
-	 * @deprecated use {@link #addCookie(String, String)} method
+	 * Add cookies.
 	 */
-	@Deprecated
-	public RequestBuilder cookie(String name, String value) {
-		return addCookie(name, value);
+	public RequestBuilder AddCookies(Map<String, String> cookies) {
+		ensureCookies();
+		for (Map.Entry<String, String> entry : cookies.entrySet()) {
+			this.cookies.add(new Cookie(entry.getKey(), entry.getValue()));
+		}
+		return this;
 	}
-	
+
+	/**
+	 * Add cookies.
+	 */
+	public RequestBuilder AddCookies(Cookie... cookies) {
+		ensureCookies();
+		for (Cookie cookie : cookies) {
+			this.cookies.add(cookie);
+		}
+		return this;
+	}
+
 	/**
 	 * Add one cookie
 	 */
@@ -528,13 +529,13 @@ public class RequestBuilder {
 		this.cookies.add(new Cookie(name, value));
 		return this;
 	}
-	
+
 	private void ensureCookies() {
 		if (this.cookies == null) {
 			this.cookies = new Cookies();
 		}
 	}
-	
+
 	/**
 	 * If follow get/head redirect, default true.
 	 * This method not set following redirect for post/put/delete method, use {@code allowPostRedirects} if you want this
@@ -543,7 +544,7 @@ public class RequestBuilder {
 		this.allowRedirects = allowRedirects;
 		return this;
 	}
-	
+
 	/**
 	 * If follow POST/PUT/DELETE redirect, default false. This method work for post method.
 	 */
@@ -551,7 +552,7 @@ public class RequestBuilder {
 		this.allowPostRedirects = allowPostRedirects;
 		return this;
 	}
-	
+
 	/**
 	 * set cert path
 	 * TODO: custom cert
@@ -561,19 +562,18 @@ public class RequestBuilder {
 //        this.cert = cert;
 //        return this;
 	}
-	
+
 	/**
 	 * add multi part file, will send multiPart requests.
 	 *
-	 * @param name the http request field name for this file
 	 * @param file the file to be send
-	 * @deprecated use {@link #addMultiPart(String, File)} method
 	 */
-	@Deprecated
-	public RequestBuilder multiPart(String name, File file) {
-		return addMultiPart(name, file);
+	public RequestBuilder addMultiPart(File file) {
+		ensureMultiPart();
+		this.multiParts.add(new MultiPart(file.getName(), file));
+		return this;
 	}
-	
+
 	/**
 	 * add multi part file, will send multiPart requests.
 	 *
@@ -585,21 +585,7 @@ public class RequestBuilder {
 		this.multiParts.add(new MultiPart(name, file));
 		return this;
 	}
-	
-	/**
-	 * add multi part file, will send multiPart requests.
-	 * this should be used with post method
-	 *
-	 * @param name     the http request field name for this file
-	 * @param mimeType the mimeType for file
-	 * @param file     the file to be send
-	 * @deprecated use {@link #addMultiPart(String, String, File)} method
-	 */
-	@Deprecated
-	public RequestBuilder multiPart(String name, String mimeType, File file) {
-		return addMultiPart(name, mimeType, file);
-	}
-	
+
 	/**
 	 * add multi part file, will send multiPart requests.
 	 * this should be used with post method
@@ -613,19 +599,7 @@ public class RequestBuilder {
 		this.multiParts.add(new MultiPart(name, mimeType, file));
 		return this;
 	}
-	
-	/**
-	 * add multi part field by byte array, will send multiPart requests.
-	 *
-	 * @param name  the http request field name for this field
-	 * @param bytes the multipart request content
-	 * @deprecated use {@link #addMultiPart(String, String, byte[])} method
-	 */
-	@Deprecated
-	public RequestBuilder multiPart(String name, String mimeType, byte[] bytes) {
-		return addMultiPart(name, mimeType, bytes);
-	}
-	
+
 	/**
 	 * add multi part field by byte array, will send multiPart requests.
 	 *
@@ -633,23 +607,10 @@ public class RequestBuilder {
 	 * @param bytes the multipart request content
 	 */
 	public RequestBuilder addMultiPart(String name, String mimeType, byte[] bytes) {
-		multiPart(name, mimeType, null, bytes);
+		addMultiPart(name, mimeType, null, bytes);
 		return this;
 	}
-	
-	/**
-	 * add multi part field by byte array, will send multiPart requests.
-	 *
-	 * @param name     the http request field name for this field
-	 * @param fileName the file name. can be null
-	 * @param bytes    the multipart request content
-	 * @deprecated use {@link #addMultiPart(String, String, String, byte[])} method
-	 */
-	@Deprecated
-	public RequestBuilder multiPart(String name, String mimeType, String fileName, byte[] bytes) {
-		return addMultiPart(name, mimeType, fileName, bytes);
-	}
-	
+
 	/**
 	 * add multi part field by byte array, will send multiPart requests.
 	 *
@@ -662,20 +623,7 @@ public class RequestBuilder {
 		this.multiParts.add(new MultiPart(name, mimeType, fileName, bytes));
 		return this;
 	}
-	
-	/**
-	 * add multi part field by inputStream, will send multiPart requests.
-	 *
-	 * @param name     the http request field name for this field
-	 * @param mimeType the mimeType for file
-	 * @param in       the inputStream for the content
-	 * @deprecated use {@link #addMultiPart(String, String, InputStream)} method
-	 */
-	@Deprecated
-	public RequestBuilder multiPart(String name, String mimeType, InputStream in) {
-		return addMultiPart(name, mimeType, in);
-	}
-	
+
 	/**
 	 * add multi part field by inputStream, will send multiPart requests.
 	 *
@@ -684,10 +632,10 @@ public class RequestBuilder {
 	 * @param in       the inputStream for the content
 	 */
 	public RequestBuilder addMultiPart(String name, String mimeType, InputStream in) {
-		multiPart(name, mimeType, null, in);
+		addMultiPart(name, mimeType, null, in);
 		return this;
 	}
-	
+
 	/**
 	 * add multi part field by inputStream, will send multiPart requests.
 	 *
@@ -696,24 +644,12 @@ public class RequestBuilder {
 	 * @param fileName the file name. can be null
 	 * @param in       the inputStream for the content
 	 */
-	public RequestBuilder multiPart(String name, String mimeType, String fileName, InputStream in) {
+	public RequestBuilder addMultiPart(String name, String mimeType, String fileName, InputStream in) {
 		ensureMultiPart();
 		this.multiParts.add(new MultiPart(name, mimeType, fileName, in));
 		return this;
 	}
-	
-	/**
-	 * Add multi part key-value parameter.
-	 *
-	 * @param name  the http request field name
-	 * @param value the file to be send
-	 * @deprecated use {@link #addMultiPart(String, File)} method
-	 */
-	@Deprecated
-	public RequestBuilder multiPart(String name, String value) {
-		return addMultiPart(name, value);
-	}
-	
+
 	/**
 	 * Add multi part key-value parameter.
 	 *
@@ -725,22 +661,22 @@ public class RequestBuilder {
 		this.multiParts.add(new MultiPart(name, value));
 		return this;
 	}
-	
+
 	private void ensureMultiPart() {
 		if (this.multiParts == null) {
 			this.multiParts = new ArrayList<>();
 		}
 	}
-	
+
 	RequestBuilder session(Session session) {
 		this.session = session;
 		return this;
 	}
-	
+
 	/**
 	 * Set connection pool. used to reuse http connections.
 	 */
-	RequestBuilder connectionPool(PooledClient pooledClient) {
+	RequestBuilder executedBy(PooledClient pooledClient) {
 		this.pooledClient = pooledClient;
 		return this;
 	}
