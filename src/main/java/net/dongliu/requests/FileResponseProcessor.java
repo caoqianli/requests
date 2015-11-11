@@ -1,8 +1,6 @@
 package net.dongliu.requests;
 
-import net.dongliu.requests.ResponseProcessor;
 import net.dongliu.requests.struct.Headers;
-import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.util.EntityUtils;
 
@@ -49,7 +47,11 @@ final class FileResponseProcessor implements ResponseProcessor<File> {
         }
         try (InputStream in = httpEntity.getContent()) {
             try (OutputStream out = new FileOutputStream(this.file)) {
-                IOUtils.copy(in, out);
+                byte[] buffer = new byte[1024 * 8];
+                int len;
+                while((len = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, len);
+                }
             }
         }
         return this.file;

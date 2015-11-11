@@ -13,7 +13,7 @@
     <artifactId>requests</artifactId>
     <name>requests</name>
     <packaging>jar</packaging>
-    <version>1.11.1.1</version>
+    <version>1.12.1</version>
     <url>https://github.com/xiaxiaocao/requests</url>
 
     <distributionManagement>
@@ -27,55 +27,58 @@
         <developer>
             <id>xiaxiaocao</id>
             <name>Liu Dong</name>
-            <email>im@dongliu.net</email>
+            <email>dongliu@live.cn</email>
         </developer>
     </developers>
 
     <licenses>
         <license>
-            <name>The BSD 2-Clause License</name>
-            <url>https://github.com/xiaxiaocao/requests/blob/master/LICENSE.txt</url>
+            <name>The BSD 3-Clause License</name>
+            <url>https://github.com/CaoQianLi/requests/blob/master/LICENSE.txt</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
 
     <scm>
-        <connection>scm:git:git@github.com:xiaxiaocao/requests.git</connection>
-        <url>https://github.com/xiaxiaocao/requests</url>
-        <developerConnection>scm:git:git@github.com:xiaxiaocao/requests.git</developerConnection>
+        <connection>scm:git:git@github.com:CaoQianLi/requests.git</connection>
+        <url>https://github.com/CaoQianLi/requests</url>
+        <developerConnection>scm:git:git@github.com:CaoQianLi/requests.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
+
+    <properties>
+        <httpclient.version>4.3.6</httpclient.version>
+        <slfj.version>1.7.7</slfj.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>${httpclient.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpmime</artifactId>
+                <version>${httpclient.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slfj.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-            <version>4.5</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpasyncclient</artifactId>
-            <version>4.1</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpmime</artifactId>
-            <version>4.5</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>2.4</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-compress</artifactId>
-            <version>1.6</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.3.2</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -100,8 +103,6 @@
             <version>9.2.10.v20150310</version>
             <scope>test</scope>
         </dependency>
-
-
     </dependencies>
 
     <build>

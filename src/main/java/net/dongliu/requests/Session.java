@@ -95,7 +95,7 @@ public class Session {
     private RequestBuilder newBuilder(String url) throws RequestException {
         RequestBuilder builder = new RequestBuilder().session(this).url(url);
         if (pooledClient != null) {
-            builder.connectionPool(pooledClient);
+            builder.executedBy(pooledClient);
         }
         return builder;
     }
