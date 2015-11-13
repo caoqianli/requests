@@ -13,7 +13,7 @@
     <artifactId>requests</artifactId>
     <name>requests</name>
     <packaging>jar</packaging>
-    <version>1.12.1</version>
+    <version>1.12.2</version>
     <url>https://github.com/xiaxiaocao/requests</url>
 
     <distributionManagement>
@@ -47,7 +47,7 @@
     </scm>
 
     <properties>
-        <httpclient.version>4.3.6</httpclient.version>
+        <httpclient.version>4.5.1</httpclient.version>
         <slfj.version>1.7.7</slfj.version>
     </properties>
 
@@ -62,6 +62,11 @@
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpmime</artifactId>
                 <version>${httpclient.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpasyncclient</artifactId>
+                <version>4.1</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
@@ -79,6 +84,10 @@
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpmime</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpasyncclient</artifactId>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

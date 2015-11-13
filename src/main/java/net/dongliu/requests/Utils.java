@@ -8,12 +8,14 @@ import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLContexts;
+import org.apache.http.nio.conn.NoopIOSessionStrategy;
+import org.apache.http.nio.conn.SchemeIOSessionStrategy;
+import org.apache.http.nio.conn.ssl.SSLIOSessionStrategy;
+import org.apache.http.ssl.SSLContexts;
 
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
+import javax.net.ssl.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
@@ -37,7 +39,7 @@ class Utils {
         // trust all http certificate
         if (!verify) {
             try {
-                sslContext = SSLContexts.custom().useTLS().build();
+                sslContext = SSLContexts.custom().useProtocol("TLS").build();
                 sslContext.init(new KeyManager[0], new TrustManager[]{new AllTrustManager()},
                         new SecureRandom());
             } catch (NoSuchAlgorithmException | KeyManagementException e) {
@@ -54,6 +56,34 @@ class Utils {
                 .register("http", psf)
                 .register("https", sslsf)
                 .build();
+    }
+    
+    static Registry<SchemeIOSessionStrategy> getSchemeIOSessionStrategy(boolean verify){
+        SSLContext sslContext;
+    
+        // trust all http certificate
+        if (!verify) {
+            try {
+                sslContext = SSLContexts.custom().useProtocol("TLS").build();
+                sslContext.init(new KeyManager[0], new TrustManager[]{new AllTrustManager()},
+                                new SecureRandom());
+            } catch (NoSuchAlgorithmException | KeyManagementException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            sslContext = SSLContexts.createSystemDefault();
+        }
+    
+        SSLIOSessionStrategy sis = new SSLIOSessionStrategy(sslContext, verify ? new NoopHostnameVerifier() : new HostnameVerifier() {
+            @Override
+            public boolean verify(String s, SSLSession sslSession) {
+                return true;
+            }
+        });
+        return RegistryBuilder.<SchemeIOSessionStrategy>create()
+                              .register("http", NoopIOSessionStrategy.INSTANCE)
+                              .register("https", sis)
+                              .build();
     }
 
     // build full url with parameters

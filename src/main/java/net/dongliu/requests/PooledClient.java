@@ -1,10 +1,12 @@
 package net.dongliu.requests;
 
+import net.dongliu.requests.async.AsyncIdleConnectionMonitorThread;
 import net.dongliu.requests.exception.RequestException;
 import net.dongliu.requests.struct.Host;
 import net.dongliu.requests.struct.Pair;
 import net.dongliu.requests.struct.Proxy;
 import org.apache.http.HttpHost;
+import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.config.Registry;
 import org.apache.http.conn.routing.HttpRoute;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
@@ -12,9 +14,14 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
+import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
+import org.apache.http.impl.nio.conn.PoolingNHttpClientConnectionManager;
+import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
+import org.apache.http.nio.client.util.HttpAsyncClientUtils;
+import org.apache.http.nio.reactor.IOReactorException;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -29,11 +36,14 @@ import java.util.concurrent.TimeUnit;
 public class PooledClient implements Closeable {
 
     // the wrapped http client
-    private final CloseableHttpClient client;
+    private CloseableHttpClient client;
+    private CloseableHttpAsyncClient asyncClient;
+    private AsyncIdleConnectionMonitorThread asyncIdleConnectionMonitorThread;
 
-    public PooledClient(CloseableHttpClient client, Proxy proxy) {
-        this.client = client;
-        this.proxy = proxy;
+    private final PooledClientBuilder pooledClientBuilder;
+
+    public PooledClient(PooledClientBuilder pooledClientBuilder) {
+        this.pooledClientBuilder = pooledClientBuilder;
     }
 
     /**
@@ -43,15 +53,15 @@ public class PooledClient implements Closeable {
         return new PooledClientBuilder();
     }
 
-    private final Proxy proxy;
-
     @Override
-    public void close() throws IOException {
-        client.close();
+    public void close() {
+        HttpClientUtils.closeQuietly(client);
+        HttpAsyncClientUtils.closeQuietly(asyncClient);
+        asyncIdleConnectionMonitorThread.interrupt();
     }
 
     Proxy getProxy() {
-        return proxy;
+        return pooledClientBuilder.proxy;
     }
 
     /**
@@ -104,6 +114,13 @@ public class PooledClient implements Closeable {
     }
 
     /**
+     * trace method
+     */
+    public RequestBuilder trace(String url) throws RequestException {
+        return Requests.trace(url).executedBy(this);
+    }
+
+    /**
      * create a session. session can do request as Requests do, and keep cookies to maintain a http session
      */
     public Session session() {
@@ -111,14 +128,83 @@ public class PooledClient implements Closeable {
     }
 
     CloseableHttpClient getHttpClient() {
+        if (client == null) {
+            buildHttpClient();
+        }
         return client;
     }
 
-    /**
-     * trace method
-     */
-    public RequestBuilder trace(String url) throws RequestException {
-        return Requests.trace(url).executedBy(this);
+    CloseableHttpAsyncClient getHttpAsyncClient() throws IOReactorException {
+        if (asyncClient == null) {
+            buildHttpAsyncClient();
+            asyncClient.start();
+        }
+        return asyncClient;
+    }
+
+    void buildHttpClient() {
+        Registry<ConnectionSocketFactory> r = Utils.getConnectionSocketFactoryRegistry(pooledClientBuilder.proxy, pooledClientBuilder.verify);
+        PoolingHttpClientConnectionManager manager = new PoolingHttpClientConnectionManager(r,
+                null,
+                null,
+                null,
+                pooledClientBuilder.timeToLive,
+                TimeUnit.MILLISECONDS);
+
+        manager.setMaxTotal(pooledClientBuilder.maxTotal);
+        manager.setDefaultMaxPerRoute(pooledClientBuilder.maxPerRoute);
+        if (pooledClientBuilder.perRouteCount != null) {
+            for (Pair<Host, Integer> pair : pooledClientBuilder.perRouteCount) {
+                Host host = pair.getName();
+                manager.setMaxPerRoute(new HttpRoute(new HttpHost(host.getDomain(), host.getPort())), pair.getValue());
+            }
+        }
+
+        HttpClientBuilder clientBuilder = HttpClients.custom().setUserAgent(pooledClientBuilder.userAgent).setConnectionManager(manager);
+
+        // disable gzip
+        if (!pooledClientBuilder.gzip) {
+            clientBuilder.disableContentCompression();
+        }
+
+        if (!pooledClientBuilder.allowRedirects) {
+            clientBuilder.disableRedirectHandling();
+        }
+
+        if (pooledClientBuilder.allowPostRedirects) {
+            clientBuilder.setRedirectStrategy(new AllRedirectStrategy());
+        }
+        client = clientBuilder.build();
+    }
+
+    void buildHttpAsyncClient() throws IOReactorException {
+        PoolingNHttpClientConnectionManager asyncConnectionManager = new PoolingNHttpClientConnectionManager(new DefaultConnectingIOReactor(),
+                null,
+                Utils.getSchemeIOSessionStrategy(pooledClientBuilder.verify),
+                null,
+                null,
+                pooledClientBuilder.timeToLive,
+                TimeUnit.MILLISECONDS);
+        asyncConnectionManager.setMaxTotal(pooledClientBuilder.maxTotal);
+        asyncConnectionManager.setDefaultMaxPerRoute(pooledClientBuilder.maxPerRoute);
+        if (pooledClientBuilder.perRouteCount != null) {
+            for (Pair<Host, Integer> pair : pooledClientBuilder.perRouteCount) {
+                Host host = pair.getName();
+                asyncConnectionManager.setMaxPerRoute(new HttpRoute(new HttpHost(host.getDomain(), host.getPort())), pair.getValue());
+            }
+        }
+        HttpAsyncClientBuilder asyncClientBuilder = HttpAsyncClientBuilder.create()
+                .setUserAgent(pooledClientBuilder.userAgent)
+                .setConnectionManager(asyncConnectionManager);
+
+        if (pooledClientBuilder.allowPostRedirects) {
+            asyncClientBuilder.setRedirectStrategy(new AllRedirectStrategy());
+        }
+
+        asyncIdleConnectionMonitorThread = new AsyncIdleConnectionMonitorThread(asyncConnectionManager);
+        asyncIdleConnectionMonitorThread.start();
+
+        asyncClient = asyncClientBuilder.build();
     }
 
     public static class PooledClientBuilder {
@@ -146,42 +232,8 @@ public class PooledClient implements Closeable {
         }
 
         public PooledClient build() {
-            Registry<ConnectionSocketFactory> r = Utils.getConnectionSocketFactoryRegistry(proxy,
-                    verify);
-            PoolingHttpClientConnectionManager manager = new PoolingHttpClientConnectionManager(r,
-                    null, null, null, timeToLive, TimeUnit.MILLISECONDS);
-
-            manager.setMaxTotal(maxTotal);
-            manager.setDefaultMaxPerRoute(maxPerRoute);
-            if (perRouteCount != null) {
-                for (Pair<Host, Integer> pair : perRouteCount) {
-                    Host host = pair.getName();
-                    manager.setMaxPerRoute(
-                            new HttpRoute(new HttpHost(host.getDomain(), host.getPort())),
-                            pair.getValue());
-                }
-            }
-
-            HttpClientBuilder clientBuilder = HttpClients.custom().setUserAgent(userAgent);
-
-            clientBuilder.setConnectionManager(manager);
-
-            // disable gzip
-            if (!gzip) {
-                clientBuilder.disableContentCompression();
-            }
-
-            if (!allowRedirects) {
-                clientBuilder.disableRedirectHandling();
-            }
-
-            if (allowPostRedirects) {
-                clientBuilder.setRedirectStrategy(new AllRedirectStrategy());
-            }
-
-            return new PooledClient(clientBuilder.build(), proxy);
+            return new PooledClient(this);
         }
-
 
         /**
          * how long http connection keep, in milliseconds. default -1, get from server response
