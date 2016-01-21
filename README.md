@@ -2,7 +2,7 @@
 
 Requests is a http request lib for java inspired by The Python [requests](http://docs.python-requests.org/) Module, using HttpClient as backend and with fluent api.
 
-The Httpclient lib is great, but has too complex API, which confuse beginners. Requests build simple and flexible api, both for common and advanced Usage.
+The HttpClient lib is great, but has too complex API, which confuse beginners. Requests build simple and flexible api, both for common and advanced Usage.
 
 #User Guide
 ##Get Requests
@@ -11,7 +11,7 @@ Requests is now in maven central repo.
 <dependency>
     <groupId>net.dongliu</groupId>
     <artifactId>requests</artifactId>
-    <version>1.11.1</version>
+    <version>2.0.0</version>
 </dependency>
 ```
 ##Make request
@@ -37,8 +37,10 @@ String body = resp.getBody();
 ```
 The text() method here trans http response body as String, there are other method to process http response:
 ```java
-// get response as string, and use provided encoding
+// get response as string, use encoding get from response header
 Response<String> resp = Requests.get(url).text();
+// get response as string, and use provided encoding
+Response<String> resp = Requests.get(url).text(StandardCharsets.UTF-8);
 // get response as bytes
 Response<byte[]> resp1 = Requests.get(url).bytes();
 // save response as file 
@@ -46,21 +48,15 @@ Response<File> resp2 = Requests.get(url).file("/path/to/save/file");
 ```
 or you can custom http response processor your self:
 ```java
-Response<String> resp = Requests.get(url).handler(new ResponseHandler<String>() {...});
+Response<String> resp = Requests.get(url).handle(new ResponseHandler<String>() {...});
 ```
-##Charset
+##Request Charset
 Set charset used to encode parameters, post forms or request string body:
 ```
 Response<String> resp = Requests.get(url).charset(StandardCharsets.UTF_8).text();
 ```
 Default charset is utf-8.
 
-HTTP response decoding will use charset got from response headers,
- if something is wrong(charset header not exists), you can set http response code with responseCharset:
-```
-Response<String> resp = Requests.get(url).charset(StandardCharsets.UTF_8)
-        .responseCharset(StandardCharsets.UTF_8).text();
-```
 ##Passing Parameters
 Pass parameters in urls using param or params method:
 ```java
@@ -68,7 +64,7 @@ Response<String> resp = Requests.get(url)
         // add one param
         .addParam("key1", "value1")
         .addParam("key1", "value1")
-        .text;
+        .text();
 // set params by map
 Map<String, Object> params = new HashMap<>();
 params.put("k1", "v1");
@@ -176,7 +172,7 @@ You may not need to know, but Requests also use connect timeout as the timeout v
 ##Gzip
 Requests send Accept-Encoding: gzip, deflate, and handle gzipped response in default. You can disable this by:
 ```java
-Response<String> resp = Requests.get(url).gzip(false).text();
+Response<String> resp = Requests.get(url).compress(false).text();
 ```
 ##Https Verification
 Some https sites do not have trusted http certificate, Exception will be throwed when request. You can disable https certificate verify by:
@@ -218,7 +214,7 @@ Response<String> resp2 = session.get(url2).text();
 ##Connection Pool
 Request(and Session) can share one connection pool to reuse http connections, via PooledClient.
 ```java
-PooledClient client = PooledClient.custom().verify(false)
+Client client = Client.custom().verify(false)
        .maxPerRoute(20)
        .maxTotal(100)
        .proxy(...)
@@ -241,4 +237,4 @@ try {
 Note:
 * You should make sure PooledClient be closed when do not need it any more.
 * If connection pool is used, you should set verify and proxy use ConnectionPoolBuilder, the connection pool's (verify, proxy) settings will override requests' settings.
-* Settings: userAgent, gzip, allowRedirects should be set at client level, request level settings will not work due to implementation restrict now.
+* Settings: userAgent, compress, allowRedirects should be set at client level, request level settings will not work due to implementation restrict now.

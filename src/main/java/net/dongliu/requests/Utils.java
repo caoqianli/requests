@@ -26,7 +26,7 @@ import java.security.SecureRandom;
 /**
  * Util methods
  *
- * @author Dong Liu dongliu@wandoujia.com
+ * @author Dong Liu dongliu@live.cn
  */
 class Utils {
 

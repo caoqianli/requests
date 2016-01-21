@@ -8,7 +8,7 @@ import org.apache.http.impl.client.BasicCookieStore;
 /**
  * one http session, share cookies, basic auth across http request.
  *
- * @author Dong Liu dongliu@wandoujia.com
+ * @author Dong Liu dongliu@live.cn
  */
 public class Session {
     private final HttpClientContext context;

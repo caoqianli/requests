@@ -1,7 +1,7 @@
 package net.dongliu.requests.struct;
 
 /**
- * @author Dong Liu dongliu@wandoujia.com
+ * @author Dong Liu dongliu@live.cn
  */
 public class AuthInfo {
     private final String userName;

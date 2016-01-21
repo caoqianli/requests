@@ -5,7 +5,7 @@ import java.util.List;
 /**
  * a list of parameters
  *
- * @author Dong Liu dongliu@wandoujia.com
+ * @author Dong Liu dongliu@live.cn
  */
 public class Parameters extends MultiMap<String, String, Parameter> {
     public Parameters() {

@@ -3,7 +3,7 @@ package net.dongliu.requests.struct;
 /**
  * host, contains domain and port
  *
- * @author Dong Liu dongliu@wandoujia.com
+ * @author Dong Liu dongliu@live.cn
  */
 public class Host {
     private final String domain;

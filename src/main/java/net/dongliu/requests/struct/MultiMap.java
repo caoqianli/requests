@@ -5,7 +5,7 @@ import java.util.*;
 /**
  * map contains a Pair list. same key can have multi values
  *
- * @author Dong Liu dongliu@wandoujia.com
+ * @author Dong Liu dongliu@live.cn
  */
 public class MultiMap<K, V, T extends Pair<K, V>> implements Iterable<T> {
 
@@ -83,5 +83,21 @@ public class MultiMap<K, V, T extends Pair<K, V>> implements Iterable<T> {
 
     public boolean isEmpty() {
         return pairs.isEmpty();
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append('{');
+        for (int i = 0; i < pairs.size(); i++) {
+            T pair = pairs.get(i);
+            sb.append(pair.getName()).append(": ").append(pair.getValue());
+            if (i != pairs.size() - 1) {
+                sb.append(", ");
+            }
+        }
+        sb.append('}');
+
+        return sb.toString();
     }
 }

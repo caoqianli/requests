@@ -1,7 +1,7 @@
 package net.dongliu.requests.struct;
 
 /**
- * @author Dong Liu dongliu@wandoujia.com
+ * @author Dong Liu dongliu@live.cn
  */
 public class Pair<K, V> {
     private final K name;
@@ -20,4 +20,8 @@ public class Pair<K, V> {
         return value;
     }
 
+    @Override
+    public String toString() {
+        return name + ": " + value;
+    }
 }

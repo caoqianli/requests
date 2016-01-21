@@ -9,7 +9,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 
 /**
- * @author Dong Liu dongliu@wandoujia.com
+ * @author Dong Liu dongliu@live.cn
  */
 public class CustomConnectionSocketFactory extends PlainConnectionSocketFactory {
     private final Proxy proxy;

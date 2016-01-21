@@ -5,7 +5,7 @@ import java.util.List;
 /**
  * a list of cookies
  *
- * @author Dong Liu dongliu@wandoujia.com
+ * @author Dong Liu dongliu@live.cn
  */
 public class Cookies extends MultiMap<String, String, Cookie> {
     public Cookies() {

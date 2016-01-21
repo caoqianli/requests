@@ -5,7 +5,7 @@ import java.util.Date;
 /**
  * http addCookie
  *
- * @author Dong Liu dongliu@wandoujia.com
+ * @author Dong Liu dongliu@live.cn
  */
 public class Cookie extends Pair<String, String> {
 
