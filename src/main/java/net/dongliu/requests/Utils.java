@@ -2,7 +2,6 @@ package net.dongliu.requests;
 
 import net.dongliu.requests.encode.URIBuilder;
 import net.dongliu.requests.struct.Parameter;
-import net.dongliu.requests.struct.Parameters;
 import net.dongliu.requests.struct.Proxy;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
@@ -22,6 +21,7 @@ import java.nio.charset.Charset;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.List;
 
 /**
  * Util methods
@@ -87,7 +87,7 @@ class Utils {
     }
 
     // build full url with parameters
-    static URI fullUrl(URI url, Charset charset, Parameters parameters) {
+    static URI fullUrl(URI url, Charset charset, List<Parameter> parameters) {
         try {
             if (parameters == null || parameters.isEmpty()) {
                 return url;

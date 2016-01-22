@@ -23,10 +23,10 @@ import java.util.concurrent.Future;
 public class RequestBuilder {
 	private Method method;
 	private URI url;
-	private Parameters parameters;
+	private List<Parameter> parameters;
 	private String userAgent = Utils.defaultUserAgent;
-	private Headers headers;
-	private Cookies cookies;
+	private List<Header> headers;
+	private List<Cookie> cookies;
 
 	private Charset charset = StandardCharsets.UTF_8;
 	private Charset responseCharset = StandardCharsets.UTF_8;
@@ -182,7 +182,7 @@ public class RequestBuilder {
 	 * This is for set parameters in url query str, If want to set post form params use form((Map&lt;String, ?&gt; params) method
 	 */
 	public RequestBuilder params(Map<String, ?> params) {
-		this.parameters = new Parameters();
+		this.parameters = new ArrayList<>();
 		for (Map.Entry<String, ?> entry : params.entrySet()) {
 			this.parameters.add(new Parameter(entry.getKey(), entry.getValue()));
 		}
@@ -194,7 +194,7 @@ public class RequestBuilder {
 	 * This is for set parameters in url query str, If want to set post form params use form(Parameter... params) method
 	 */
 	public RequestBuilder params(Parameter... params) {
-		this.parameters = new Parameters();
+		this.parameters = new ArrayList<>();
 		for (Parameter param : params) {
 			this.parameters.add(new Parameter(param.getName(), param.getValue()));
 		}
@@ -237,7 +237,7 @@ public class RequestBuilder {
 
 	private void ensureParameters() {
 		if (this.parameters == null) {
-			this.parameters = new Parameters();
+			this.parameters = new ArrayList<>();
 		}
 	}
 
@@ -368,7 +368,7 @@ public class RequestBuilder {
 	 * Set headers. Will overwrite old header values
 	 */
 	public RequestBuilder headers(Map<String, ?> params) {
-		this.headers = new Headers();
+		this.headers = new ArrayList<>();
 		for (Map.Entry<String, ?> entry : params.entrySet()) {
 			this.headers.add(new Header(entry.getKey(), entry.getValue()));
 		}
@@ -379,7 +379,7 @@ public class RequestBuilder {
 	 * Set headers. Will overwrite old header values
 	 */
 	public RequestBuilder headers(Header... headers) {
-		this.headers = new Headers();
+		this.headers = new ArrayList<>();
 		for (Header header : headers) {
 			this.headers.add(header);
 		}
@@ -419,7 +419,7 @@ public class RequestBuilder {
 
 	private void ensureHeaders() {
 		if (this.headers == null) {
-			this.headers = new Headers();
+			this.headers = new ArrayList<>();
 		}
 	}
 
@@ -480,7 +480,7 @@ public class RequestBuilder {
 	 * Set cookies. Will overwrite old cookie values
 	 */
 	public RequestBuilder cookies(Map<String, String> cookies) {
-		this.cookies = new Cookies();
+		this.cookies = new ArrayList<>();
 		for (Map.Entry<String, String> entry : cookies.entrySet()) {
 			this.cookies.add(new Cookie(entry.getKey(), entry.getValue()));
 		}
@@ -491,7 +491,7 @@ public class RequestBuilder {
 	 * Set cookies. Will overwrite old cookie values
 	 */
 	public RequestBuilder cookies(Cookie... cookies) {
-		this.cookies = new Cookies();
+		this.cookies = new ArrayList<>();
 		for (Cookie cookie : cookies) {
 			this.cookies.add(cookie);
 		}
@@ -502,7 +502,7 @@ public class RequestBuilder {
 	/**
 	 * Add cookies.
 	 */
-	public RequestBuilder AddCookies(Map<String, String> cookies) {
+	public RequestBuilder addCookies(Map<String, String> cookies) {
 		ensureCookies();
 		for (Map.Entry<String, String> entry : cookies.entrySet()) {
 			this.cookies.add(new Cookie(entry.getKey(), entry.getValue()));
@@ -513,7 +513,7 @@ public class RequestBuilder {
 	/**
 	 * Add cookies.
 	 */
-	public RequestBuilder AddCookies(Cookie... cookies) {
+	public RequestBuilder addCookies(Cookie... cookies) {
 		ensureCookies();
 		for (Cookie cookie : cookies) {
 			this.cookies.add(cookie);
@@ -532,7 +532,7 @@ public class RequestBuilder {
 
 	private void ensureCookies() {
 		if (this.cookies == null) {
-			this.cookies = new Cookies();
+			this.cookies = new ArrayList<>();
 		}
 	}
 

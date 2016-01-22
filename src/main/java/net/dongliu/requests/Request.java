@@ -17,9 +17,9 @@ public class Request {
     private final Method method;
     private final URI url;
     private final String userAgent;
-    private final Headers headers;
-    private final Cookies cookies;
-    private final Parameters parameters;
+    private final List<Header> headers;
+    private final List<Cookie> cookies;
+    private final List<Parameter> parameters;
     private final byte[] body;
     private final String strBody;
     private final Parameters paramBody;
@@ -41,9 +41,9 @@ public class Request {
     private final Proxy proxy;
     private final Charset charset;
 
-    Request(Method method, URI url, Parameters parameters, String userAgent, Headers headers,
+    Request(Method method, URI url, List<Parameter> parameters, String userAgent, List<Header> headers,
             InputStream in, List<MultiPart> multiParts, byte[] body, String strBody, Parameters paramBody,
-            Charset charset, AuthInfo authInfo, boolean gzip, boolean verify, Cookies cookies,
+            Charset charset, AuthInfo authInfo, boolean gzip, boolean verify, List<Cookie> cookies,
             boolean allowRedirects, boolean allowPostRedirects, int connectTimeout, int socketTimeout, Proxy proxy) {
         this.method = method;
         this.url = url;
@@ -83,15 +83,15 @@ public class Request {
         return userAgent;
     }
 
-    public Headers getHeaders() {
+    public List<Header> getHeaders() {
         return headers;
     }
 
-    public Cookies getCookies() {
+    public List<Cookie> getCookies() {
         return cookies;
     }
 
-    public Parameters getParameters() {
+    public List<Parameter> getParameters() {
         return parameters;
     }
 
