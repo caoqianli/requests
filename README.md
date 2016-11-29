@@ -162,7 +162,7 @@ Requests.get(url).followRedirect(false).send();
 
 ##Timeout
 
-There are two timeout parameters you can set, connect timeout, and socket timeout. The timeout value default to 10_1000 milliseconds.
+There are two timeout parameters you can set, connect timeout, and socket timeout. The timeout value default to 10_000 milliseconds.
 
 ```java
 // both connec timeout, and socket timeout
