@@ -8,7 +8,7 @@
     <artifactId>requests</artifactId>
     <name>Convenient http client for java</name>
     <packaging>jar</packaging>
-    <version>5.0.7</version>
+    <version>5.0.8</version>
     <url>https://github.com/clearthesky/requests</url>
 
     <parent>
