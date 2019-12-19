@@ -1,8 +1,8 @@
 package net.dongliu.requests.body;
 
 import net.dongliu.commons.Objects2;
-import net.dongliu.commons.annotation.Nullable;
 import net.dongliu.commons.io.InputStreams;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.*;
 import java.nio.charset.Charset;

@@ -1,8 +1,9 @@
 package net.dongliu.requests.json;
 
 
-import net.dongliu.commons.annotation.NonNull;
-import net.dongliu.commons.annotation.Nullable;
+
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Objects;
 

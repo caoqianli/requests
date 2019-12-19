@@ -1,7 +1,7 @@
 package net.dongliu.requests.utils;
 
-import net.dongliu.commons.annotation.Nullable;
 import net.dongliu.commons.collection.Lists;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;

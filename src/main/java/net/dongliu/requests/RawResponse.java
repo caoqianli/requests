@@ -1,8 +1,6 @@
 package net.dongliu.requests;
 
 import net.dongliu.commons.Lazy;
-import net.dongliu.commons.annotation.InternalUseOnly;
-import net.dongliu.commons.annotation.Nullable;
 import net.dongliu.commons.io.Closeables;
 import net.dongliu.commons.io.InputStreams;
 import net.dongliu.commons.io.Readers;
@@ -10,6 +8,7 @@ import net.dongliu.requests.ResponseHandler.ResponseInfo;
 import net.dongliu.requests.exception.RequestsException;
 import net.dongliu.requests.json.JsonLookup;
 import net.dongliu.requests.json.TypeInfer;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.*;
 import java.lang.reflect.Type;
@@ -54,7 +53,6 @@ public class RawResponse extends AbstractResponse implements AutoCloseable {
     }
 
     // Only for internal use. Do not call this method.
-    @InternalUseOnly
     public RawResponse(String method, String url, int statusCode, String statusLine, List<Cookie> cookies, Headers headers,
                        InputStream input, HttpURLConnection conn) {
         super(url, statusCode, cookies, headers);

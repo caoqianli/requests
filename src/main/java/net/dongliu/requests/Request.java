@@ -1,8 +1,8 @@
 package net.dongliu.requests;
 
-import net.dongliu.commons.annotation.Nullable;
 import net.dongliu.requests.body.RequestBody;
 import net.dongliu.requests.executor.SessionContext;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.Serializable;
 import java.net.Proxy;

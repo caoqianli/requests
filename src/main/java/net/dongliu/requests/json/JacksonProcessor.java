@@ -2,7 +2,7 @@ package net.dongliu.requests.json;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import net.dongliu.commons.annotation.Nullable;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.*;
 import java.lang.reflect.Type;

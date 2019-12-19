@@ -1,5 +1,7 @@
 package net.dongliu.requests.body;
 
+import net.dongliu.commons.collection.Lists;
+
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.Collection;
@@ -29,6 +31,7 @@ public abstract class RequestBody<T> implements Serializable {
 
     /**
      * The request body
+     *
      * @deprecated use {@link #body()}
      */
     @Deprecated
@@ -84,6 +87,7 @@ public abstract class RequestBody<T> implements Serializable {
 
     /**
      * If write charset to contentType
+     *
      * @deprecated use {@link #includeCharset()}
      */
     @Deprecated
@@ -101,7 +105,7 @@ public abstract class RequestBody<T> implements Serializable {
     /**
      * Write the request body to output stream.
      *
-     * @param out  the output stream to writeTo to
+     * @param out     the output stream to writeTo to
      * @param charset the charset to use
      */
     public void writeTo(OutputStream out, Charset charset) throws IOException {
@@ -132,8 +136,15 @@ public abstract class RequestBody<T> implements Serializable {
      * Create request body send x-www-form-encoded data
      */
     public static RequestBody<Collection<? extends Map.Entry<String, ?>>>
-    form(Collection<? extends Map.Entry<String, ?>> value) {
-        return new FormRequestBody(requireNonNull(value));
+    form(Collection<? extends Map.Entry<String, ?>> params) {
+        return new FormRequestBody(requireNonNull(params));
+    }
+
+    /**
+     * Create request body send x-www-form-encoded data
+     */
+    public static RequestBody<Collection<? extends Map.Entry<String, ?>>> form(Map.Entry<String, ?>... params) {
+        return form(Lists.of(params));
     }
 
     /**
@@ -170,7 +181,7 @@ public abstract class RequestBody<T> implements Serializable {
     /**
      * Create multi-part post request body
      */
-    public static RequestBody<Collection<? extends Part>> multiPart(Collection<? extends Part> parts) {
+    public static RequestBody<Collection<? extends Part<?>>> multiPart(Collection<? extends Part<?>> parts) {
         return new MultiPartRequestBody(requireNonNull(parts));
     }
 }

@@ -1,9 +1,9 @@
 package net.dongliu.requests.executor;
 
-import net.dongliu.commons.annotation.NonNull;
 import net.dongliu.requests.Interceptor;
 import net.dongliu.requests.RawResponse;
 import net.dongliu.requests.Request;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
  * Http executor

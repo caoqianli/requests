@@ -1,6 +1,5 @@
 package net.dongliu.requests.executor;
 
-import net.dongliu.commons.annotation.Nullable;
 import net.dongliu.commons.io.InputStreams;
 import net.dongliu.requests.*;
 import net.dongliu.requests.body.RequestBody;
@@ -10,6 +9,7 @@ import net.dongliu.requests.utils.Cookies;
 import net.dongliu.requests.utils.NopHostnameVerifier;
 import net.dongliu.requests.utils.SSLSocketFactories;
 import net.dongliu.requests.utils.URLUtils;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
@@ -93,7 +93,7 @@ class URLConnectionExecutor implements HttpExecutor {
     private RawResponse doRequest(Request request) {
         Charset charset = request.charset();
         URL url = URLUtils.joinUrl(request.url(), URLUtils.toStringParameters(request.params()), charset);
-        @Nullable RequestBody body = request.body();
+        @Nullable RequestBody<?> body = request.body();
         CookieJar cookieJar;
         if (request.sessionContext() != null) {
             cookieJar = request.sessionContext().cookieJar();

@@ -1,6 +1,5 @@
 package net.dongliu.requests;
 
-import net.dongliu.commons.annotation.Nullable;
 import net.dongliu.commons.collection.Lists;
 import net.dongliu.requests.body.Part;
 import net.dongliu.requests.body.RequestBody;
@@ -8,6 +7,7 @@ import net.dongliu.requests.exception.RequestsException;
 import net.dongliu.requests.executor.HttpExecutor;
 import net.dongliu.requests.executor.RequestExecutorFactory;
 import net.dongliu.requests.executor.SessionContext;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.InputStream;
 import java.net.MalformedURLException;

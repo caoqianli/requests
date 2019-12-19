@@ -1,6 +1,6 @@
 package net.dongliu.requests;
 
-import net.dongliu.commons.annotation.Nullable;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Collections;
 import java.util.List;

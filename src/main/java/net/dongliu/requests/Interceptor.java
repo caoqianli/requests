@@ -1,6 +1,7 @@
 package net.dongliu.requests;
 
-import net.dongliu.commons.annotation.NonNull;
+
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
  * Http request Interceptor

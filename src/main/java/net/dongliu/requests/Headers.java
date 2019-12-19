@@ -2,8 +2,8 @@ package net.dongliu.requests;
 
 
 import net.dongliu.commons.Lazy;
-import net.dongliu.commons.annotation.Nullable;
 import net.dongliu.commons.collection.Lists;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.Serializable;
 import java.nio.charset.Charset;

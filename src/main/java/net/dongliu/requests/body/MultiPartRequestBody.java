@@ -12,12 +12,12 @@ import java.util.Collection;
  *
  * @author Liu Dong
  */
-class MultiPartRequestBody extends RequestBody<Collection<? extends Part>> {
+class MultiPartRequestBody extends RequestBody<Collection<? extends Part<?>>> {
     private static final String BOUNDARY = "********************" + System.currentTimeMillis();
     private static final String LINE_END = "\r\n";
     private static final long serialVersionUID = -2150328570818986957L;
 
-    public MultiPartRequestBody(Collection<? extends Part> body) {
+    public MultiPartRequestBody(Collection<? extends Part<?>> body) {
         super(body, "multipart/form-data; boundary=" + BOUNDARY, false);
     }
 
